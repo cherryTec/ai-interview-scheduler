@@ -10,7 +10,10 @@ function Login() {
    */
   const signInWithGoogle = async () => {
     const {error}=await supabase.auth.signInWithOAuth({
-      provider:'google'
+      provider:'google',
+      options:{
+        redirectTo:'https://3000-cherrytec-aiinterviewsc-37jy7261554.ws-us118.gitpod.io/dashboard'
+      }
     })
 
     if(error) {

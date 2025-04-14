@@ -1,11 +1,15 @@
 import React from 'react'
 import DashboardPriver from './provider'
+import WelcomeContainer from './dashboard/_components/WelcomeContainer'
 
 function DashboardLayout({children}) {
   return (
-    <div>
+    <div className='bg-gray-100'>
         <DashboardPriver>
-           {children}
+           <div>     
+               {children}
+           </div>
+           
         </DashboardPriver>
         
     </div>
