@@ -5,84 +5,39 @@ import { Timer,Mic, Phone } from 'lucide-react'
 import Image from 'next/image'
 import Vapi from "@vapi-ai/web";
 import AlertConfirmation from './_components/AlertConfirmation'
-
-
-
-
+import { toast } from 'sonner'
 
 function StartInterview() {
    const {interviewInfo, setInterviewInfo}= useContext(InterviewDataContext)
-
-   // grok debug ERROR:Duplicate DailyIframe start
-   const vapiRef = useRef(new Vapi(process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY)) 
-   
-   // grok debug ERROR.......................end
+   const { activeUser, setActiveUser} = useState(false)
+   const [isCallActive, setIsCallActive] = useState(false);  // Track call state-- grok dubug v2
+ 
   
-  //const vapi = new Vapi(process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY);   //replace this line from last debug line
-  const [isCallActive, setIsCallActive] = useState(false); // Track call state-- grok dubug v2
+  const vapi = new Vapi(process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY); 
 
   useEffect(()=>{
-   //  grok dubug v2
-    if (interviewInfo && !isCallActive) {
-      startCall();
-    }
 
-    return () => {
-      if (isCallActive) {
-        console.log("Cleaning up Vapi call");
-        vapiRef.current.stop();
-        setIsCallActive(false);
-      }
-    }
-    //interviewInfo && startCall()
-
-    // grok ERROR:Duplicate start
-      // Cleanup on component unmount
-    // return () => {
-    //   vapiRef.current.stop(); // Stop Vapi call to prevent duplicate instances
-    // };   
-    //grok debug end
-  },[interviewInfo,isCallActive])
+   interviewInfo &&  startCall() 
+   
+  },[interviewInfo])
 
 
-  //let questionList;
-  //grok debug v2
-  let questionList = '';
-  const startCall = () => {
-    // grok debug v2
-    if (isCallActive) {
-      console.log("Call already active, skipping start");
-      return;
-    }
-    
+  let questionList;
+  
+  const startCall = () => {    
     console.log("interviewInfo",interviewInfo)
     interviewInfo?.interviewData?.QusestionList.forEach((item,index)=>{
         questionList=item?.question+","+questionList
     })
 
-    // grok ERROR:Duplicate start
-    
-      // Start Vapi call
-     //vapiRef.current.start(assistantOptions);
-      //grok debug end
+    setIsCallActive(true);
 
-      //grok debug v2
-      try {
-        vapiRef.current.start(assistantOptions);
-        setIsCallActive(true);
-        console.log("Vapi call started");
-      } catch (error) {
-        console.error("Failed to start Vapi call:", error);
-      }
-  
   }
-//grok debug v2
-  const stopCall = () => {
-    if (isCallActive) {
-      vapiRef.current.stop();
-      setIsCallActive(false);
-      console.log("Vapi call stopped");
-    }
+
+  const stopCall = () => {   
+      vapi.stop();      
+      console.log("Vapi call stopped"); 
+      
   };
 
   // Voice assisatan settings start
@@ -134,7 +89,30 @@ function StartInterview() {
             };
 
   // Voice assitant setting end
-//vapi.start(assistantOptions).    //replace from inside useEffect
+vapi.start(assistantOptions)
+
+
+vapi.on("speech-start", () => {
+  console.log("Assistant speech has started.");
+  setActiveUser(false)
+});
+
+vapi.on("speech-end", () => {
+  console.log("Assistant speech has ended.");
+  setActiveUser(true)
+
+});
+
+vapi.on("call-start", () => {
+  console.log("Call has started.");
+  toast('Call Connected..')
+});
+
+vapi.on("call-end", () => {
+  console.log("Call has ended.");
+  toast('Interview Ended')
+});
+
 
   return (
     <div className='p-20 lg:px-48 xl:px-56'>
@@ -147,13 +125,18 @@ function StartInterview() {
 
        <div className="grid grid-cols-1 md:grid-cols-2 gap-7  mt-7">
           <div className='border rounded-lg h-[400px] flex flex-col gap-3 items-center justify-center'>
+            <div className="relative">
+             {!activeUser && <span className='absolute inset-0 rounded-full bg-blue opacity-25 animate-ping'>......</span>}
               <Image src={'/ai.png'} alt='ai' width={100} height={100} className='w-[100px] h-[100px] rounded-full object-cover'/>
               <h2>AI Recruiter</h2>
+            </div>
           </div>
-
           <div className='border rounded-lg h-[400px] flex flex-col gap-3 items-center justify-center'>
+          <div className="relative">
+             {activeUser && <span className='absolute inset-0 rounded-full bg-blue opacity-25 animate-ping'>......</span>}
               <h2 className='text-lg bg-primary text-white rounded-full p-3 px-5'>{interviewInfo?.userName[0]}</h2>
               <h2>{interviewInfo?.userName}</h2>
+           </div>
           </div>
        </div>
 
