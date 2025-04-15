@@ -41,7 +41,7 @@ const onCreateLink = (interview_id) => {
   //DATA_FRO-onCreateLink-interviewId undefined interview_id: {interview_id: '5a454fdd-bac8-4c3c-adcc-de01af020810'}
    console.log("DATA_FRO-onCreateLink-interviewId",interviewId,"interview_id:",interview_id)
 }
-gi
+
 
   return (
     <div className='mt-10 px-10 md:px-24 lg:px-44 xl:px-56'>

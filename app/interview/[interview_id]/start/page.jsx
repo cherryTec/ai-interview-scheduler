@@ -1,5 +1,5 @@
 "use client"
-import React, { useContext, useEffect } from 'react'
+import React, { useContext, useEffect,useRef, useState } from 'react'
 import { InterviewDataContext } from '@/context/InterviewDataContext'
 import { Timer,Mic, Phone } from 'lucide-react'
 import Image from 'next/image'
@@ -12,22 +12,78 @@ import AlertConfirmation from './_components/AlertConfirmation'
 
 function StartInterview() {
    const {interviewInfo, setInterviewInfo}= useContext(InterviewDataContext)
-  
-  const vapi = new Vapi(process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY);
- 
-  useEffect(()=>{
-    interviewInfo && startCall()
-  },[interviewInfo])
 
-  let questionList;
+   // grok debug ERROR:Duplicate DailyIframe start
+   const vapiRef = useRef(new Vapi(process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY)) 
+   
+   // grok debug ERROR.......................end
+  
+  //const vapi = new Vapi(process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY);   //replace this line from last debug line
+  const [isCallActive, setIsCallActive] = useState(false); // Track call state-- grok dubug v2
+
+  useEffect(()=>{
+   //  grok dubug v2
+    if (interviewInfo && !isCallActive) {
+      startCall();
+    }
+
+    return () => {
+      if (isCallActive) {
+        console.log("Cleaning up Vapi call");
+        vapiRef.current.stop();
+        setIsCallActive(false);
+      }
+    }
+    //interviewInfo && startCall()
+
+    // grok ERROR:Duplicate start
+      // Cleanup on component unmount
+    // return () => {
+    //   vapiRef.current.stop(); // Stop Vapi call to prevent duplicate instances
+    // };   
+    //grok debug end
+  },[interviewInfo,isCallActive])
+
+
+  //let questionList;
+  //grok debug v2
+  let questionList = '';
   const startCall = () => {
+    // grok debug v2
+    if (isCallActive) {
+      console.log("Call already active, skipping start");
+      return;
+    }
     
     console.log("interviewInfo",interviewInfo)
     interviewInfo?.interviewData?.QusestionList.forEach((item,index)=>{
         questionList=item?.question+","+questionList
     })
+
+    // grok ERROR:Duplicate start
+    
+      // Start Vapi call
+     //vapiRef.current.start(assistantOptions);
+      //grok debug end
+
+      //grok debug v2
+      try {
+        vapiRef.current.start(assistantOptions);
+        setIsCallActive(true);
+        console.log("Vapi call started");
+      } catch (error) {
+        console.error("Failed to start Vapi call:", error);
+      }
   
   }
+//grok debug v2
+  const stopCall = () => {
+    if (isCallActive) {
+      vapiRef.current.stop();
+      setIsCallActive(false);
+      console.log("Vapi call stopped");
+    }
+  };
 
   // Voice assisatan settings start
 
@@ -78,7 +134,7 @@ function StartInterview() {
             };
 
   // Voice assitant setting end
-vapi.start(assistantOptions)
+//vapi.start(assistantOptions).    //replace from inside useEffect
 
   return (
     <div className='p-20 lg:px-48 xl:px-56'>
@@ -104,7 +160,7 @@ vapi.start(assistantOptions)
        <div className='flex gap-5 items-center justify-center mt-7'>
           <Mic   className='bg-gray-500 text-white w-12 h-12 p-3 rounded-full cursor-pointer'/>
           
-          <AlertConfirmation stopInterview={()=>vapi.stop()}>
+          <AlertConfirmation stopInterview={stopCall}>
               <Phone  className='bg-red-500 text-white w-12 h-12 p-3 rounded-full cursor-pointer'/>
           </AlertConfirmation>
          
